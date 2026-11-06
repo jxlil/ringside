@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Maskable variant: full-bleed red, artwork inside the 80% safe zone. -->
+  <rect width="512" height="512" fill="#e0262b"/>
+  <g transform="translate(256 262) scale(0.78) translate(-256 -262)">
+    <g fill="#fff">
+      <circle cx="256" cy="150" r="20"/>
+      <path d="M168 318 C168 236 194 172 256 168 C318 172 344 236 344 318 Z"/>
+      <rect x="140" y="306" width="232" height="34" rx="17"/>
+      <circle cx="256" cy="370" r="24"/>
+    </g>
+    <g fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round">
+      <path d="M126 214 Q102 256 126 298"/>
+      <path d="M386 214 Q410 256 386 298"/>
+    </g>
+  </g>
+</svg>

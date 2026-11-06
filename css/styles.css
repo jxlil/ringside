@@ -340,9 +340,11 @@ button:focus-visible, input:focus-visible {
   --ctrl-main: rgba(0, 0, 0, 0.32);
   /* Not position: fixed on purpose: iOS Safari 26 samples a fixed element
      touching the top edge once for the status bar tint and never updates it.
-     In normal flow it uses the page background, which JS paints per phase. */
+     In normal flow it uses the page background, which JS paints per phase.
+     svh = height with Safari's toolbars showing, so the buttons are never
+     hidden behind them. */
   height: 100vh;
-  height: 100dvh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -358,6 +360,11 @@ button:focus-visible, input:focus-visible {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
+}
+/* Installed app (home screen): no Safari toolbars, and iOS reports vh units
+   wrong there, cutting off the bottom. Pin the screen to the real viewport. */
+@media (display-mode: standalone) {
+  #running { position: fixed; inset: 0; height: auto; }
 }
 #running[data-phase="work"] { --phase-bg: var(--phase-work); --phase-fg: #fff; }
 #running[data-phase="rest"] { --phase-bg: var(--phase-rest); --phase-fg: #fff; }

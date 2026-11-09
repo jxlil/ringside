@@ -1,8 +1,9 @@
 // "Presets" screen: list saved workouts, load one, delete one.
 
 import { buildTimeline, totalDuration, formatTime } from "../timeline.js";
+import { t } from "../i18n.js";
 
-/** Short description, e.g. "3 × 2:00 · descanso 1:00" or "3 × (5× 30 s + 30 s)". */
+/** Short description, e.g. "3 × 2:00 · rest 1:00" or "3 × 5× Power + Speed". */
 export function describe(config) {
   const { blocks, repeat } = config.round;
   const blockText =
@@ -10,7 +11,7 @@ export function describe(config) {
       ? formatTime(blocks[0].duration)
       : `${repeat > 1 ? `${repeat}× ` : ""}${blocks.map((b) => b.label).join(" + ")}`;
   const parts = [`${config.rounds} × ${blockText}`];
-  if (config.rest > 0 && config.rounds > 1) parts.push(`descanso ${formatTime(config.rest)}`);
+  if (config.rest > 0 && config.rounds > 1) parts.push(t("restFor", { time: formatTime(config.rest) }));
   return parts.join(" · ");
 }
 
@@ -48,16 +49,16 @@ export function createPresetsScreen({ root, store, onSelect, onClose }) {
         total.className = "preset-total";
         total.textContent = formatTime(totalDuration(buildTimeline(preset)));
         open.append(name, meta, total);
-        open.setAttribute("aria-label", `Cargar ${preset.name}, ${describe(preset)}`);
+        open.setAttribute("aria-label", t("loadPreset", { name: preset.name, desc: describe(preset) }));
         open.addEventListener("click", () => onSelect(structuredClone(preset)));
 
         const del = document.createElement("button");
         del.type = "button";
         del.className = "btn btn-icon preset-delete";
         del.textContent = "✕";
-        del.setAttribute("aria-label", `Borrar ${preset.name}`);
+        del.setAttribute("aria-label", t("deletePreset", { name: preset.name }));
         del.addEventListener("click", () => {
-          if (!confirm(`¿Borrar "${preset.name}"?`)) return;
+          if (!confirm(t("confirmDelete", { name: preset.name }))) return;
           store.deletePreset(preset.id);
           render();
         });

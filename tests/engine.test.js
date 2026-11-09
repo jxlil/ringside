@@ -16,7 +16,7 @@ function setup(config = classic) {
   const clock = {
     now: () => t,
     advance(seconds) {
-      t += Math.round(seconds * 1e6) / 1e3; // ms, sin error flotante acumulado
+      t += Math.round(seconds * 1e6) / 1e3; // ms, no accumulated float error
     },
   };
   const engine = new Engine(buildTimeline(config), { now: clock.now, driver: null });
@@ -31,7 +31,7 @@ function setup(config = classic) {
   return { engine, clock, events, step };
 }
 
-test("start emite segmentStart con el primer segmento", () => {
+test("start emits segmentStart with the first segment", () => {
   const { engine, events } = setup();
   engine.start();
   assert.equal(engine.status, "running");
@@ -40,26 +40,26 @@ test("start emite segmentStart con el primer segmento", () => {
   assert.equal(engine.state.remainingSeconds, 10);
 });
 
-test("los segundos usan ceil: 0:01 hasta el final y cambio exacto en 0:00", () => {
+test("seconds use ceil: 0:01 until the end and the switch lands on 0:00", () => {
   const { engine, step } = setup();
   engine.start();
   step(0.001);
   assert.equal(engine.state.remainingSeconds, 10);
-  step(9.998); // 9.999 s transcurridos
+  step(9.998); // 9.999 s elapsed
   assert.equal(engine.state.remainingSeconds, 1);
   assert.equal(engine.state.segment.type, "prep");
-  step(0.001); // exactamente 10 s
+  step(0.001); // exactly 10 s
   assert.equal(engine.state.segment.type, "work");
   assert.equal(engine.state.remainingSeconds, 120);
 });
 
-test("pausa conserva el tiempo restante y reanudar recalcula endAt", () => {
+test("pause keeps the remaining time and resume recomputes endAt", () => {
   const { engine, clock, step } = setup();
   engine.start();
   step(4);
   engine.pause();
   assert.equal(engine.status, "paused");
-  clock.advance(300); // tiempo en pausa: no cuenta
+  clock.advance(300); // time spent paused does not count
   assert.equal(engine.state.remainingMs, 6000);
   engine.resume();
   assert.equal(engine.state.remainingMs, 6000);
@@ -67,10 +67,10 @@ test("pausa conserva el tiempo restante y reanudar recalcula endAt", () => {
   assert.equal(engine.state.segment.type, "work");
 });
 
-test("volver de segundo plano salta los segmentos ya terminados sin desfase", () => {
+test("returning from background skips finished segments without drift", () => {
   const { engine, events, step } = setup();
   engine.start();
-  // prep 10 + round 120 + descanso 60 = 190; 5 s dentro del round 2
+  // prep 10 + round 120 + rest 60 = 190; 5 s into round 2
   step(195);
   assert.equal(engine.state.segment.type, "work");
   assert.equal(engine.state.segment.roundIndex, 1);
@@ -78,29 +78,29 @@ test("volver de segundo plano salta los segmentos ya terminados sin desfase", ()
   const starts = events.filter((e) => e.type === "segmentStart");
   assert.equal(starts.at(-1).skipped, 2);
   assert.equal(starts.at(-1).previous.type, "rest");
-  // No suena un aviso tardío de segmentos que ya pasaron (solo el de la prep)
+  // No late warning for segments already gone (only the prep one)
   const late = events.filter((e) => e.type === "warning" && e.segment.type !== "prep");
   assert.equal(late.length, 0);
 });
 
-test("muchos updates pequeños no acumulan desfase", () => {
+test("many small updates do not accumulate drift", () => {
   const { engine, step } = setup();
   engine.start();
-  for (let i = 0; i < 190_000 / 16; i++) step(0.016); // frames de 16 ms
-  // 190 s después debe estar justo al inicio del round 2
+  for (let i = 0; i < 190_000 / 16; i++) step(0.016); // 16 ms frames
+  // 190 s later it must be right at the start of round 2
   assert.equal(engine.state.segment.roundIndex, 1);
   assert.equal(engine.state.remainingMs, 120_000);
 });
 
-test("aviso se emite una sola vez al entrar a los últimos 10 s", () => {
+test("the warning fires once when entering the last 10 s", () => {
   const { engine, events, step } = setup();
   engine.start();
-  step(10); // empieza round 1
+  step(10); // round 1 starts
   const workWarnings = () =>
     events.filter((e) => e.type === "warning" && e.segment.type === "work");
-  step(109.5); // quedan 10.5 s → muestra 11
+  step(109.5); // 10.5 s left → shows 11
   assert.equal(workWarnings().length, 0);
-  step(0.5); // quedan 10 s
+  step(0.5); // 10 s left
   step(0.2);
   step(3);
   const warnings = workWarnings();
@@ -108,7 +108,7 @@ test("aviso se emite una sola vez al entrar a los últimos 10 s", () => {
   assert.equal(warnings[0].segment.type, "work");
 });
 
-test("las tablas suenan una sola vez en la preparación, al faltar 10 s", () => {
+test("the clapper sounds once during prep, with 10 s left", () => {
   const { engine, events, step } = setup();
   engine.start();
   for (let i = 0; i < 99; i++) step(0.1);
@@ -117,7 +117,7 @@ test("las tablas suenan una sola vez en la preparación, al faltar 10 s", () => 
   assert.equal(warnings[0].segment.type, "prep");
 });
 
-test("con una preparación larga las tablas esperan a los últimos 10 s", () => {
+test("with a long prep the clapper waits for the last 10 s", () => {
   const { engine, events, step } = setup({ ...classic, prep: 30 });
   engine.start();
   step(19.5);
@@ -126,7 +126,7 @@ test("con una preparación larga las tablas esperan a los últimos 10 s", () => 
   assert.equal(events.filter((e) => e.type === "warning").length, 1);
 });
 
-test("saltar avanza al siguiente segmento con su duración completa", () => {
+test("skip moves to the next segment with its full duration", () => {
   const { engine, events, step } = setup();
   engine.start();
   step(3);
@@ -136,7 +136,7 @@ test("saltar avanza al siguiente segmento con su duración completa", () => {
   assert.equal(events.at(-1).manual, true);
 });
 
-test("saltar en pausa mantiene la pausa", () => {
+test("skipping while paused stays paused", () => {
   const { engine } = setup();
   engine.start();
   engine.pause();
@@ -145,7 +145,7 @@ test("saltar en pausa mantiene la pausa", () => {
   assert.equal(engine.state.remainingMs, 120_000);
 });
 
-test("termina después del último round y emite finish", () => {
+test("finishes after the last round and emits finish", () => {
   const { engine, events, step } = setup();
   engine.start();
   step(10 + 120 * 3 + 60 * 2);
@@ -154,18 +154,18 @@ test("termina después del último round y emite finish", () => {
   assert.ok(finish);
   assert.equal(finish.previous.type, "work");
   assert.equal(engine.state.totalRemainingMs, 0);
-  step(10); // ya no hace nada
+  step(10); // no-op from here on
   assert.equal(events.filter((e) => e.type === "finish").length, 1);
 });
 
-test("saltar el último segmento termina", () => {
+test("skipping the last segment finishes", () => {
   const { engine } = setup();
   engine.start();
   for (let i = 0; i < 6; i++) engine.skip();
   assert.equal(engine.status, "finished");
 });
 
-test("totalRemainingMs cuenta todo lo que falta", () => {
+test("totalRemainingMs counts everything left", () => {
   const { engine, step } = setup();
   engine.start();
   assert.equal(engine.state.totalRemainingMs, 490_000);
@@ -173,7 +173,7 @@ test("totalRemainingMs cuenta todo lo que falta", () => {
   assert.equal(engine.state.totalRemainingMs, 475_000);
 });
 
-test("reiniciar vuelve a idle en el primer segmento", () => {
+test("reset goes back to idle on the first segment", () => {
   const { engine, step } = setup();
   engine.start();
   step(50);

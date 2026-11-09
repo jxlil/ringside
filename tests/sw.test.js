@@ -17,25 +17,25 @@ const walk = (dir) =>
     return statSync(join(root, path)).isDirectory() ? walk(path) : [path];
   });
 
-test("CACHE_VERSION existe", () => {
+test("CACHE_VERSION exists", () => {
   assert.match(sw, /const CACHE_VERSION = "v\d+";/);
 });
 
-test("todos los archivos del precache existen", () => {
-  for (const file of precache) assert.ok(existsSync(join(root, file)), `falta ${file}`);
+test("every precached file exists", () => {
+  for (const file of precache) assert.ok(existsSync(join(root, file)), `missing ${file}`);
 });
 
-test("el precache incluye todos los JS, CSS, íconos PNG y media", () => {
+test("precache includes every JS, CSS, PNG icon and media file", () => {
   const needed = [
     ...walk("js"),
     ...walk("css"),
     ...walk("media"),
     ...walk("icons").filter((f) => f.endsWith(".png")),
   ].map((f) => relative(".", f));
-  for (const file of needed) assert.ok(precache.includes(file), `sw.js no precachea ${file}`);
+  for (const file of needed) assert.ok(precache.includes(file), `sw.js does not precache ${file}`);
 });
 
-test("las rutas en index.html y el manifest son relativas", () => {
+test("paths in index.html and the manifest are relative", () => {
   const html = readFileSync(join(root, "index.html"), "utf8");
   const manifest = readFileSync(join(root, "manifest.webmanifest"), "utf8");
   assert.doesNotMatch(html, /(src|href)="\/(?!\/)/);

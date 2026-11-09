@@ -8,6 +8,9 @@ import { createSetupScreen } from "./ui/setup.js";
 import { createRunningScreen } from "./ui/running.js";
 import { createPresetsScreen } from "./ui/presets.js";
 import { createStore } from "./storage.js";
+import { t, applyToDocument } from "./i18n.js";
+
+applyToDocument();
 
 const store = createStore();
 
@@ -44,7 +47,7 @@ const running = createRunningScreen({
   onReset: () => {
     if (!engine) return;
     const done = engine.status === "finished";
-    if (!done && !confirm("¿Reiniciar el entrenamiento?")) return;
+    if (!done && !confirm(t("confirmRestart"))) return;
     stopEngine();
     running.leave();
     showScreen("setup");
@@ -66,7 +69,7 @@ function startWorkout(config) {
     return;
   }
 
-  audio.unlock(); // must run inside the Iniciar click handler
+  audio.unlock(); // must run inside the Start click handler
   stopEngine();
   engine = new Engine(segments);
   running.reset();
@@ -78,7 +81,7 @@ function startWorkout(config) {
     render(state);
   });
   engine.on("resume", (state) => {
-    wakelock.acquire(); // runs inside the Reanudar click
+    wakelock.acquire(); // runs inside the Resume click
     render(state);
   });
   engine.on("segmentStart", (state) => {
@@ -93,11 +96,11 @@ function startWorkout(config) {
     wakelock.release();
     render(state);
     cue(transitionCue(state.previous, null));
-    running.announce("Entrenamiento terminado");
+    running.announce(t("workoutFinished"));
   });
 
   showScreen("running");
-  wakelock.acquire(); // inside the Iniciar click, so the video fallback can play
+  wakelock.acquire(); // inside the Start click, so the video fallback can play
   engine.start();
 }
 
@@ -132,7 +135,7 @@ const presets = createPresetsScreen({
   onSelect: (preset) => {
     setup.load(preset);
     showScreen("setup");
-    setup.showStatus(`Cargado: ${preset.name}`);
+    setup.showStatus(t("loaded", { name: preset.name }));
   },
   onClose: () => {
     setup.refresh(); // the current preset may have been deleted
@@ -155,7 +158,7 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// iOS has no install prompt: suggest "Agregar a inicio" in Safari, once.
+// iOS has no install prompt: suggest "Add to Home Screen" in Safari, once.
 function setupInstallHint() {
   const hint = document.querySelector("#install-hint");
   const KEY = "ringside.installHint.dismissed";

@@ -1,7 +1,8 @@
-// "Configurar" screen: edits a config object and reports every change.
+// Setup screen: edits a config object and reports every change.
 
 import { createStepper, timeStep } from "./stepper.js";
 import { buildTimeline, totalDuration, formatTime } from "../timeline.js";
+import { t } from "../i18n.js";
 
 const MAX_BLOCKS = 6;
 
@@ -40,7 +41,7 @@ export function createSetupScreen({
 
   const updateSaveButtons = () => {
     const existing = Boolean(cfg.id) && presetExists(cfg.id);
-    saveBtn.textContent = existing ? "Guardar cambios" : "Guardar preset";
+    saveBtn.textContent = existing ? t("saveChanges") : t("savePreset");
     saveAsNewBtn.hidden = !existing;
   };
 
@@ -67,7 +68,7 @@ export function createSetupScreen({
   const renderGeneral = () => {
     general.replaceChildren(
       createStepper({
-        label: "Rounds",
+        label: t("rounds"),
         value: cfg.rounds,
         min: 1,
         max: 30,
@@ -76,15 +77,15 @@ export function createSetupScreen({
           changed();
         },
       }),
-      timeStepper("Descanso", "rest", 0, 600),
-      timeStepper("Preparación", "prep", 0, 120),
+      timeStepper(t("rest"), "rest", 0, 600),
+      timeStepper(t("prepTime"), "prep", 0, 120),
       createStepper({
-        label: "Aviso final",
+        label: t("finalWarning"),
         value: cfg.warning,
         min: 0,
         max: 60,
         step: 5,
-        format: (v) => (v === 0 ? "No" : `${v} s`),
+        format: (v) => (v === 0 ? t("off") : `${v} s`),
         onChange: (v) => {
           cfg.warning = v;
           changed();
@@ -93,7 +94,7 @@ export function createSetupScreen({
     );
     repeatField.replaceChildren(
       createStepper({
-        label: "Repeticiones",
+        label: t("repeats"),
         value: cfg.round.repeat,
         min: 1,
         max: 30,
@@ -120,8 +121,8 @@ export function createSetupScreen({
         name.className = "block-name";
         name.value = block.label;
         name.maxLength = 24;
-        name.placeholder = `Bloque ${i + 1}`;
-        name.setAttribute("aria-label", `Nombre del bloque ${i + 1}`);
+        name.placeholder = t("block", { n: i + 1 });
+        name.setAttribute("aria-label", t("blockName", { n: i + 1 }));
         name.addEventListener("input", () => {
           block.label = name.value;
           changed();
@@ -133,7 +134,7 @@ export function createSetupScreen({
           remove.type = "button";
           remove.className = "btn btn-icon";
           remove.textContent = "✕";
-          remove.setAttribute("aria-label", `Quitar bloque ${block.label || i + 1}`);
+          remove.setAttribute("aria-label", t("removeBlock", { name: block.label || i + 1 }));
           remove.addEventListener("click", () => {
             blocks.splice(i, 1);
             renderBlocks();
@@ -145,7 +146,7 @@ export function createSetupScreen({
         li.append(
           head,
           createStepper({
-            label: "Duración",
+            label: t("duration"),
             value: block.duration,
             min: 5,
             max: 1200,
@@ -164,7 +165,7 @@ export function createSetupScreen({
   };
 
   addBlock.addEventListener("click", () => {
-    cfg.round.blocks.push({ label: `Bloque ${cfg.round.blocks.length + 1}`, duration: 30 });
+    cfg.round.blocks.push({ label: t("block", { n: cfg.round.blocks.length + 1 }), duration: 30 });
     renderBlocks();
     changed();
   });
@@ -181,7 +182,7 @@ export function createSetupScreen({
     const saved = onSave(structuredClone(cfg), { asNew });
     if (!saved) return;
     load(saved);
-    showStatus(`Guardado: ${saved.name}`);
+    showStatus(t("saved", { name: saved.name }));
   };
   saveBtn.addEventListener("click", () => save(false));
   saveAsNewBtn.addEventListener("click", () => save(true));

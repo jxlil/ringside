@@ -7,6 +7,7 @@ import {
   formatTime,
   normalizeConfig,
 } from "../js/timeline.js";
+import { setLanguage } from "../js/i18n.js";
 
 const classic = {
   name: "Sparring 3×2",
@@ -18,7 +19,7 @@ const classic = {
 };
 
 const intervals = {
-  name: "Costal intenso/velocidad",
+  name: "Heavy bag power/speed",
   rounds: 3,
   rest: 60,
   prep: 10,
@@ -26,13 +27,13 @@ const intervals = {
   round: {
     repeat: 5,
     blocks: [
-      { label: "Intenso", duration: 30 },
-      { label: "Velocidad", duration: 30 },
+      { label: "Power", duration: 30 },
+      { label: "Speed", duration: 30 },
     ],
   },
 };
 
-test("box clásico: prep, 3 rounds y 2 descansos en orden", () => {
+test("classic boxing: prep, 3 rounds and 2 rests in order", () => {
   const segs = buildTimeline(classic);
   assert.deepEqual(
     segs.map((s) => s.type),
@@ -49,16 +50,16 @@ test("box clásico: prep, 3 rounds y 2 descansos en orden", () => {
   assert.equal(totalDuration(segs), 10 + 3 * 120 + 2 * 60);
 });
 
-test("intervalos: 5 series de 2 bloques por round", () => {
+test("intervals: 5 sets of 2 blocks per round", () => {
   const segs = buildTimeline(intervals);
-  // 1 prep + 3 rounds × 10 bloques + 2 descansos
+  // 1 prep + 3 rounds × 10 blocks + 2 rests
   assert.equal(segs.length, 1 + 30 + 2);
 
   const round1 = segs.slice(1, 11);
   assert.ok(round1.every((s) => s.type === "work" && s.roundIndex === 0));
   assert.deepEqual(
     round1.map((s) => s.label),
-    Array(5).fill(["Intenso", "Velocidad"]).flat(),
+    Array(5).fill(["Power", "Speed"]).flat(),
   );
   assert.deepEqual(
     round1.map((s) => s.repeatIndex),
@@ -69,7 +70,7 @@ test("intervalos: 5 series de 2 bloques por round", () => {
   assert.equal(totalDuration(segs), 10 + 3 * 5 * 60 + 2 * 60);
 });
 
-test("no hay descanso después del último round", () => {
+test("no rest after the last round", () => {
   for (const cfg of [classic, intervals]) {
     const segs = buildTimeline(cfg);
     assert.equal(segs.at(-1).type, "work");
@@ -77,7 +78,7 @@ test("no hay descanso después del último round", () => {
   }
 });
 
-test("la prep solo aparece al inicio", () => {
+test("prep only appears at the start", () => {
   for (const cfg of [classic, intervals]) {
     const segs = buildTimeline(cfg);
     assert.equal(segs[0].type, "prep");
@@ -86,7 +87,7 @@ test("la prep solo aparece al inicio", () => {
   }
 });
 
-test("sin prep ni descanso cuando valen 0", () => {
+test("no prep or rest when they are 0", () => {
   const segs = buildTimeline({ ...classic, prep: 0, rest: 0 });
   assert.deepEqual(
     segs.map((s) => s.type),
@@ -94,10 +95,10 @@ test("sin prep ni descanso cuando valen 0", () => {
   );
 });
 
-test("el aviso va al final de cada round y de cada descanso", () => {
+test("the warning goes at the end of each round and each rest", () => {
   const segs = buildTimeline(intervals);
   const warned = segs.filter((s) => s.warning > 0 && s.type !== "prep");
-  // último bloque de cada round (3) + descansos (2)
+  // last block of each round (3) + rests (2)
   assert.equal(warned.length, 5);
   for (const s of warned) {
     if (s.type === "work") {
@@ -109,7 +110,7 @@ test("el aviso va al final de cada round y de cada descanso", () => {
   }
 });
 
-test("el aviso se descarta si no es menor que el segmento", () => {
+test("the warning is dropped unless shorter than the segment", () => {
   const segs = buildTimeline({
     ...classic,
     warning: 30,
@@ -118,23 +119,23 @@ test("el aviso se descarta si no es menor que el segmento", () => {
   assert.equal(segs.find((s) => s.type === "work").warning, 0);
 });
 
-test("normalizeConfig rechaza rounds sin bloques", () => {
+test("normalizeConfig rejects rounds without blocks", () => {
   assert.throws(() => normalizeConfig({ rounds: 2, round: { blocks: [] } }));
   assert.throws(() =>
     normalizeConfig({ rounds: 2, round: { blocks: [{ label: "x", duration: 0 }] } }),
   );
 });
 
-test("transitionCue distingue campana y cambio de bloque", () => {
+test("transitionCue tells the bell from a block change", () => {
   const segs = buildTimeline(intervals);
-  const [prep, intenso, velocidad] = segs;
+  const [prep, power, speed] = segs;
   const lastWork = segs[10];
   const rest = segs[11];
   const nextRound = segs[12];
 
   assert.equal(transitionCue(null, prep), null);
-  assert.equal(transitionCue(prep, intenso), "roundStart");
-  assert.equal(transitionCue(intenso, velocidad), "blockChange");
+  assert.equal(transitionCue(prep, power), "roundStart");
+  assert.equal(transitionCue(power, speed), "blockChange");
   assert.equal(transitionCue(lastWork, rest), "roundEnd");
   assert.equal(transitionCue(rest, nextRound), "roundStart");
   assert.equal(transitionCue(segs.at(-1), null), "roundEnd");
@@ -147,8 +148,26 @@ test("formatTime", () => {
   assert.equal(formatTime(125), "2:05");
 });
 
-test("el aviso de la preparación no pasa de su duración", () => {
+test("the prep warning never exceeds its duration", () => {
   assert.equal(buildTimeline({ ...classic, prep: 5 })[0].warning, 5);
   assert.equal(buildTimeline({ ...classic, prep: 30 })[0].warning, 10);
   assert.equal(buildTimeline({ ...classic, warning: 0 })[0].warning, 0);
+});
+
+test("prep, rest and default block labels follow the language", () => {
+  const unnamed = { ...classic, round: { repeat: 1, blocks: [{ label: "", duration: 60 }] } };
+  try {
+    setLanguage("es");
+    assert.deepEqual(
+      buildTimeline(unnamed).slice(0, 3).map((s) => s.label),
+      ["Prepárate", "Bloque 1", "Descanso"],
+    );
+    setLanguage("en");
+    assert.deepEqual(
+      buildTimeline(unnamed).slice(0, 3).map((s) => s.label),
+      ["Get ready", "Block 1", "Rest"],
+    );
+  } finally {
+    setLanguage("en");
+  }
 });

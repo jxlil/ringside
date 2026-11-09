@@ -2,7 +2,7 @@
 // Cache-first. Bump CACHE_VERSION on every release: the new worker downloads
 // everything again and deletes the old caches on activate.
 
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const CACHE_NAME = `ringside-${CACHE_VERSION}`;
 
 // Every file the app needs. tests/sw.test.js checks this list against the repo.
@@ -14,6 +14,7 @@ const PRECACHE = [
   "./js/app.js",
   "./js/audio.js",
   "./js/engine.js",
+  "./js/i18n.js",
   "./js/storage.js",
   "./js/timeline.js",
   "./js/wakelock.js",

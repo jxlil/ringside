@@ -1,6 +1,7 @@
-// "En curso" screen: renders engine state. No timing logic lives here.
+// "Running" screen: renders engine state. No timing logic lives here.
 
 import { formatTime } from "../timeline.js";
+import { t } from "../i18n.js";
 
 // Height of a digit relative to the font size (system UI fonts ≈ 0.72).
 const DIGIT_HEIGHT = 0.72;
@@ -76,8 +77,8 @@ export function createRunningScreen({ root, onPauseToggle, onSkip, onReset }) {
 
   const describeNext = (state) => {
     const n = state.next;
-    if (!n) return "Último segmento";
-    return `Sigue: ${n.label} · ${formatTime(n.duration)}`;
+    if (!n) return t("lastSegment");
+    return t("upNext", { label: n.label, time: formatTime(n.duration) });
   };
 
   function setPhase(phase) {
@@ -113,21 +114,17 @@ export function createRunningScreen({ root, onPauseToggle, onSkip, onReset }) {
     setText("total", formatTime(Math.ceil(state.totalRemainingMs / 1000)));
 
     if (finished) {
-      setText("label", "¡Terminado!");
-      setText("round", seg ? `${seg.roundsTotal} rounds` : "");
+      setText("label", t("finished"));
+      setText("round", seg ? t("roundsCount", { n: seg.roundsTotal }) : "");
       setText("series", "");
-      setText("next", "Tiempo total · Buen trabajo");
+      setText("next", t("finishedNext"));
     } else if (seg) {
-      setText(
-        "round",
-        seg.type === "rest"
-          ? `Round ${seg.roundIndex + 1} / ${seg.roundsTotal} ✓`
-          : `Round ${seg.roundIndex + 1} / ${seg.roundsTotal}`,
-      );
+      const round = t("roundOf", { i: seg.roundIndex + 1, n: seg.roundsTotal });
+      setText("round", seg.type === "rest" ? `${round} ✓` : round);
       setText(
         "series",
         seg.type === "work" && seg.repeatTotal > 1
-          ? `Serie ${seg.repeatIndex + 1} / ${seg.repeatTotal}`
+          ? t("setOf", { i: seg.repeatIndex + 1, n: seg.repeatTotal })
           : "",
       );
       setText("label", seg.label);
@@ -136,10 +133,10 @@ export function createRunningScreen({ root, onPauseToggle, onSkip, onReset }) {
     el.series.hidden = !lastText.series;
 
     const paused = state.status === "paused";
-    setText("pauseText", paused ? "Reanudar" : "Pausa");
-    el.pause.setAttribute("aria-label", paused ? "Reanudar" : "Pausar");
-    setText("resetText", finished ? "Volver" : "Reiniciar");
-    el.reset.setAttribute("aria-label", finished ? "Volver a configurar" : "Reiniciar entrenamiento");
+    setText("pauseText", paused ? t("resume") : t("pause"));
+    el.pause.setAttribute("aria-label", paused ? t("resume") : t("pause"));
+    setText("resetText", finished ? t("back") : t("restart"));
+    el.reset.setAttribute("aria-label", finished ? t("backToSetup") : t("restartWorkout"));
   }
 
   return {

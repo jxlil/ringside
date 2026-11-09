@@ -1,10 +1,7 @@
 // Converts a workout config into a flat list of segments.
 // Pure logic: no DOM, no timers. Everything else consumes this list.
 
-export const LABELS = {
-  prep: "Prepárate",
-  rest: "Descanso",
-};
+import { t } from "./i18n.js";
 
 const toInt = (value, fallback) => {
   const n = Math.round(Number(value));
@@ -16,13 +13,13 @@ export function normalizeConfig(config = {}) {
   const round = config.round ?? {};
   const blocks = (round.blocks ?? [])
     .map((b, i) => ({
-      label: String(b?.label ?? "").trim() || `Bloque ${i + 1}`,
+      label: String(b?.label ?? "").trim() || t("block", { n: i + 1 }),
       duration: Math.max(0, toInt(b?.duration, 0)),
     }))
     .filter((b) => b.duration > 0);
 
   if (blocks.length === 0) {
-    throw new Error("El round necesita al menos un bloque con duración.");
+    throw new Error(t("noBlocks"));
   }
 
   return {
@@ -60,7 +57,7 @@ export function buildTimeline(config) {
   if (c.prep > 0) {
     segments.push({
       type: "prep",
-      label: LABELS.prep,
+      label: t("prep"),
       duration: c.prep,
       roundIndex: 0,
       roundsTotal,
@@ -92,7 +89,7 @@ export function buildTimeline(config) {
     if (r < roundsTotal - 1 && c.rest > 0) {
       segments.push({
         type: "rest",
-        label: LABELS.rest,
+        label: t("rest"),
         duration: c.rest,
         roundIndex: r,
         roundsTotal,

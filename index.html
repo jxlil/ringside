@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="es-MX">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0e0e10">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="Timer de rounds para box: campana, tablas y presets.">
+  <meta name="description" content="Boxing round timer: bell, clapper and presets.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,64 +20,67 @@
 <body>
   <main id="setup" class="screen" aria-labelledby="setup-title">
     <aside id="install-hint" class="install-hint" hidden>
-      <p>Agrégala a tu pantalla de inicio: toca <strong>Compartir</strong> y luego <strong>“Agregar a inicio”</strong>. Así abre en pantalla completa y funciona sin internet.</p>
-      <button type="button" id="install-hint-close" class="btn btn-icon" aria-label="Cerrar aviso">✕</button>
+      <p data-i18n-html="installHint">Add it to your Home Screen: tap <strong>Share</strong>, then <strong>“Add to Home Screen”</strong>. It opens full screen and works offline.</p>
+      <button type="button" id="install-hint-close" class="btn btn-icon" aria-label="Close tip" data-i18n-label="closeHint">✕</button>
     </aside>
     <header class="setup-header">
       <h1 id="setup-title">Ringside</h1>
-      <p class="total">Duración total <strong id="total">0:00</strong></p>
+      <p class="total"><span data-i18n="totalDuration">Total time</span> <strong id="total">0:00</strong></p>
     </header>
 
     <div class="preset-bar">
       <input type="text" id="preset-name" class="preset-name" maxlength="40"
-             placeholder="Nombre del entrenamiento" aria-label="Nombre del entrenamiento" enterkeyhint="done">
-      <button type="button" id="open-presets" class="btn btn-pill" aria-label="Ver presets guardados">
+             placeholder="Workout name" aria-label="Workout name"
+             data-i18n-placeholder="workoutName" data-i18n-label="workoutName" enterkeyhint="done">
+      <button type="button" id="open-presets" class="btn btn-pill" aria-label="Show saved presets" data-i18n-label="openPresets">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>
         Presets
       </button>
     </div>
 
-    <section class="group" aria-label="Entrenamiento">
+    <section class="group" aria-label="Workout" data-i18n-label="workout">
       <div id="general-fields"></div>
     </section>
 
     <section class="group" aria-labelledby="round-title">
-      <h2 id="round-title">Dentro de cada round</h2>
+      <h2 id="round-title" data-i18n="insideRound">Inside each round</h2>
       <div id="repeat-field"></div>
       <ol id="blocks" class="blocks"></ol>
-      <button type="button" id="add-block" class="btn btn-secondary">+ Agregar bloque</button>
+      <button type="button" id="add-block" class="btn btn-secondary" data-i18n="addBlock">+ Add block</button>
     </section>
 
     <div class="save-row">
-      <button type="button" id="save-preset" class="btn">Guardar preset</button>
-      <button type="button" id="save-as-new" class="btn" hidden>Guardar como nuevo</button>
+      <button type="button" id="save-preset" class="btn">Save preset</button>
+      <button type="button" id="save-as-new" class="btn" hidden data-i18n="saveAsNew">Save as new</button>
     </div>
     <p id="setup-status" class="setup-status" role="status" aria-live="polite"></p>
 
-    <button type="button" id="test-sound" class="btn btn-ghost" aria-label="Probar sonido de la campana">🔔 Probar sonido</button>
+    <button type="button" id="test-sound" class="btn btn-ghost" aria-label="Test the bell sound"
+          data-i18n-label="testSoundLabel" data-i18n="testSound">🔔 Test sound</button>
 
     <div class="setup-actions">
-      <button type="button" id="start" class="btn btn-primary btn-big">Iniciar</button>
+      <button type="button" id="start" class="btn btn-primary btn-big" data-i18n="start">Start</button>
     </div>
   </main>
 
   <main id="presets" class="screen" hidden aria-labelledby="presets-title">
     <header class="presets-header">
-      <button type="button" id="close-presets" class="btn btn-pill" aria-label="Volver a configurar">‹ Volver</button>
+      <button type="button" id="close-presets" class="btn btn-pill" aria-label="Back to setup"
+              data-i18n-label="backToSetup" data-i18n="backArrow">‹ Back</button>
       <h1 id="presets-title">Presets</h1>
     </header>
     <ul id="preset-list" class="preset-list"></ul>
     <div id="presets-empty" class="presets-empty" hidden>
-      <p>No hay presets guardados.</p>
-      <button type="button" id="restore-presets" class="btn">Restaurar ejemplos</button>
+      <p data-i18n="noPresets">No saved presets.</p>
+      <button type="button" id="restore-presets" class="btn" data-i18n="restoreExamples">Restore examples</button>
     </div>
   </main>
 
-  <main id="running" class="screen" hidden aria-label="Entrenamiento en curso">
+  <main id="running" class="screen" hidden aria-label="Workout in progress" data-i18n-label="runningLabel">
     <header class="run-top">
       <span id="run-round" class="run-chip"></span>
       <span id="run-series" class="run-chip"></span>
-      <span class="run-chip run-paused">En pausa</span>
+      <span class="run-chip run-paused" data-i18n="paused">Paused</span>
     </header>
     <p id="run-label" class="run-label"></p>
     <div id="run-time-box" class="run-time-box">
@@ -85,22 +88,22 @@
     </div>
     <div class="run-info">
       <p id="run-next" class="run-next"></p>
-      <p class="run-total">Restante total <span id="run-total">0:00</span></p>
+      <p class="run-total"><span data-i18n="totalRemaining">Total left</span> <span id="run-total">0:00</span></p>
     </div>
 
     <div class="run-controls">
-      <button type="button" id="btn-reset" class="btn btn-control" aria-label="Reiniciar entrenamiento">
+      <button type="button" id="btn-reset" class="btn btn-control" aria-label="Restart workout">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg>
-        <span id="btn-reset-text">Reiniciar</span>
+        <span id="btn-reset-text">Restart</span>
       </button>
-      <button type="button" id="btn-pause" class="btn btn-control btn-main" aria-label="Pausar">
+      <button type="button" id="btn-pause" class="btn btn-control btn-main" aria-label="Pause">
         <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
         <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>
-        <span id="btn-pause-text">Pausa</span>
+        <span id="btn-pause-text">Pause</span>
       </button>
-      <button type="button" id="btn-skip" class="btn btn-control" aria-label="Saltar al siguiente segmento">
+      <button type="button" id="btn-skip" class="btn btn-control" aria-label="Skip to next segment" data-i18n-label="skipLabel">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16l11-8zM17 4h3v16h-3z"/></svg>
-        <span>Saltar</span>
+        <span data-i18n="skip">Skip</span>
       </button>
     </div>
   </main>

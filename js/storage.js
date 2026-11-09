@@ -2,6 +2,7 @@
 // The storage is injectable so it can be tested in Node.
 
 import { normalizeConfig } from "./timeline.js";
+import { t, getLanguage, LANGUAGES } from "./i18n.js";
 
 const KEY_PRESETS = "ringside.presets.v1";
 const KEY_LAST = "ringside.last.v1";
@@ -9,68 +10,72 @@ const KEY_DEFAULTS = "ringside.defaults.version";
 
 // Built-in presets, based on common boxing gym routines. Bump
 // DEFAULTS_VERSION when adding one, so existing installs get it too.
+// Names and labels are in the device language (see localizeBuiltIn).
 const DEFAULTS_VERSION = 2;
 const base = { prep: 10, warning: 10 };
 
-export const DEFAULT_PRESETS = [
-  {
-    // Warm-up rope: 3-min rounds alternating relaxed rhythm and all-out bursts.
-    id: "default-rope",
-    name: "Cuerda",
-    ...base,
-    rounds: 5,
-    rest: 60,
-    round: {
-      repeat: 6,
-      blocks: [
-        { label: "Ritmo", duration: 20 },
-        { label: "Rápido", duration: 10 },
-      ],
+export const defaultPresets = (lang = getLanguage()) => {
+  const tr = (key) => t(key, {}, lang);
+  return [
+    {
+      // Warm-up rope: 3-min rounds alternating relaxed rhythm and all-out bursts.
+      id: "default-rope",
+      name: tr("presetRope"),
+      ...base,
+      rounds: 5,
+      rest: 60,
+      round: {
+        repeat: 6,
+        blocks: [
+          { label: tr("blockRhythm"), duration: 20 },
+          { label: tr("blockFast"), duration: 10 },
+        ],
+      },
     },
-  },
-  {
-    // Shadowboxing: footwork, jabs and combos, short rest.
-    id: "default-shadow",
-    name: "Sombra",
-    ...base,
-    rounds: 3,
-    rest: 30,
-    round: { repeat: 1, blocks: [{ label: "Sombra", duration: 180 }] },
-  },
-  {
-    // Heavy bag: 30 s hard power shots / 30 s fast punches, three times a round.
-    id: "default-intervals",
-    name: "Costal intenso/velocidad",
-    ...base,
-    rounds: 4,
-    rest: 60,
-    round: {
-      repeat: 3,
-      blocks: [
-        { label: "Intenso", duration: 30 },
-        { label: "Velocidad", duration: 30 },
-      ],
+    {
+      // Shadowboxing: footwork, jabs and combos, short rest.
+      id: "default-shadow",
+      name: tr("presetShadow"),
+      ...base,
+      rounds: 3,
+      rest: 30,
+      round: { repeat: 1, blocks: [{ label: tr("blockShadow"), duration: 180 }] },
     },
-  },
-  {
-    // Mitts with the coach: standard 3-min rounds.
-    id: "default-mitts",
-    name: "Manoplas",
-    ...base,
-    rounds: 4,
-    rest: 60,
-    round: { repeat: 1, blocks: [{ label: "Manoplas", duration: 180 }] },
-  },
-  {
-    // Amateur bout format: 3 rounds of 3 min, 1 min rest.
-    id: "default-sparring",
-    name: "Sparring 3×3",
-    ...base,
-    rounds: 3,
-    rest: 60,
-    round: { repeat: 1, blocks: [{ label: "Round", duration: 180 }] },
-  },
-];
+    {
+      // Heavy bag: 30 s hard power shots / 30 s fast punches, three times a round.
+      id: "default-intervals",
+      name: tr("presetBag"),
+      ...base,
+      rounds: 4,
+      rest: 60,
+      round: {
+        repeat: 3,
+        blocks: [
+          { label: tr("blockPower"), duration: 30 },
+          { label: tr("blockSpeed"), duration: 30 },
+        ],
+      },
+    },
+    {
+      // Mitts with the coach: standard 3-min rounds.
+      id: "default-mitts",
+      name: tr("presetMitts"),
+      ...base,
+      rounds: 4,
+      rest: 60,
+      round: { repeat: 1, blocks: [{ label: tr("blockMitts"), duration: 180 }] },
+    },
+    {
+      // Amateur bout format: 3 rounds of 3 min, 1 min rest.
+      id: "default-sparring",
+      name: tr("presetSparring"),
+      ...base,
+      rounds: 3,
+      rest: 60,
+      round: { repeat: 1, blocks: [{ label: tr("blockRound"), duration: 180 }] },
+    },
+  ];
+};
 
 const FIRST_LOAD_PRESET = "default-sparring";
 
@@ -110,7 +115,29 @@ function defaultStorage() {
   }
 }
 
-export function createStore(storage = defaultStorage()) {
+// Same config, ignoring the id.
+const sameConfig = (a, b) => {
+  const { id: _a, ...restA } = a;
+  const { id: _b, ...restB } = b;
+  return JSON.stringify(restA) === JSON.stringify(restB);
+};
+
+export function createStore(storage = defaultStorage(), { lang = getLanguage() } = {}) {
+  const defaults = defaultPresets(lang);
+  const isBuiltIn = (p) => defaults.some((d) => d.id === p.id);
+
+  // A built-in preset the user never edited follows the device language:
+  // if it matches the built-in of another language, swap in this one.
+  const localizeBuiltIn = (preset) => {
+    if (!preset?.id || !isBuiltIn(preset)) return preset;
+    for (const other of LANGUAGES) {
+      if (other === lang) continue;
+      const theirs = defaultPresets(other).find((d) => d.id === preset.id);
+      if (sameConfig(preset, clean(theirs))) return structuredClone(defaults.find((d) => d.id === preset.id));
+    }
+    return preset;
+  };
+
   const read = (key) => {
     try {
       const raw = storage.getItem(key);
@@ -131,17 +158,18 @@ export function createStore(storage = defaultStorage()) {
     const stored = read(KEY_PRESETS);
     if (!Array.isArray(stored)) {
       // First run: preload the built-in presets.
-      const seeded = structuredClone(DEFAULT_PRESETS);
+      const seeded = structuredClone(defaults);
       write(KEY_PRESETS, seeded);
       write(KEY_DEFAULTS, DEFAULTS_VERSION);
       return seeded;
     }
-    const presets = stored.map(clean).filter((p) => p && p.id);
+    const cleaned = stored.map(clean).filter((p) => p && p.id);
+    const presets = cleaned.map(localizeBuiltIn);
+    if (presets.some((p, i) => p !== cleaned[i])) write(KEY_PRESETS, presets);
     if ((read(KEY_DEFAULTS) ?? 1) < DEFAULTS_VERSION) {
       // Older install: refresh the built-ins to their new definition (in
       // their order) and keep the user's own presets after them.
-      const isBuiltIn = (p) => DEFAULT_PRESETS.some((d) => d.id === p.id);
-      const upgraded = [...structuredClone(DEFAULT_PRESETS), ...presets.filter((p) => !isBuiltIn(p))];
+      const upgraded = [...structuredClone(defaults), ...presets.filter((p) => !isBuiltIn(p))];
       write(KEY_PRESETS, upgraded);
       write(KEY_DEFAULTS, DEFAULTS_VERSION);
       return upgraded;
@@ -152,8 +180,8 @@ export function createStore(storage = defaultStorage()) {
   /** Creates (no id, or asNew) or updates (existing id) a preset. */
   function savePreset(config, { asNew = false } = {}) {
     const preset = clean(config);
-    if (!preset) throw new Error("Configuración inválida.");
-    if (!preset.name) preset.name = "Mi entrenamiento";
+    if (!preset) throw new Error(t("invalidConfig", {}, lang));
+    if (!preset.name) preset.name = t("myWorkout", {}, lang);
     const presets = listPresets();
     const index = asNew ? -1 : presets.findIndex((p) => p.id === preset.id);
     if (index >= 0) {
@@ -175,7 +203,7 @@ export function createStore(storage = defaultStorage()) {
 
   function restoreDefaults() {
     const presets = listPresets();
-    for (const def of DEFAULT_PRESETS) {
+    for (const def of defaults) {
       if (!presets.some((p) => p.id === def.id)) presets.push(structuredClone(def));
     }
     write(KEY_PRESETS, presets);
@@ -184,8 +212,8 @@ export function createStore(storage = defaultStorage()) {
 
   /** Last config used (or edited); falls back to the sparring preset. */
   function loadLast() {
-    const fallback = DEFAULT_PRESETS.find((p) => p.id === FIRST_LOAD_PRESET);
-    return clean(read(KEY_LAST)) ?? structuredClone(fallback);
+    const fallback = defaults.find((p) => p.id === FIRST_LOAD_PRESET);
+    return localizeBuiltIn(clean(read(KEY_LAST))) ?? structuredClone(fallback);
   }
 
   function saveLast(config) {

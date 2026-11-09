@@ -1,8 +1,8 @@
 {
   "name": "Ringside",
   "short_name": "Ringside",
-  "description": "Timer de rounds para box: campana, tablas y presets.",
-  "lang": "es-MX",
+  "description": "Boxing round timer: bell, clapper and presets.",
+  "lang": "en",
   "id": "./",
   "start_url": "./",
   "scope": "./",

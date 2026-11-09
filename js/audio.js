@@ -1,7 +1,7 @@
 // Synthesized sounds with the Web Audio API. No audio files.
 //
 // iOS only allows audio after a user gesture: call unlock() synchronously
-// inside a click handler (Iniciar, Pausa, etc.) before playing anything.
+// inside a click handler (Start, Pause, etc.) before playing anything.
 
 let ctx = null;
 let master = null;

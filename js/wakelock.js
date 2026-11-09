@@ -79,7 +79,7 @@ function engage() {
 }
 
 /**
- * Keeps the screen on. Call it from a user gesture (Iniciar / Reanudar) so
+ * Keeps the screen on. Call it from a user gesture (Start / Resume) so
  * the video fallback is allowed to play.
  */
 export function acquire() {

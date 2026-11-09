@@ -1,5 +1,7 @@
 // Large − / + stepper. Holding a button repeats the step.
 
+import { t } from "../i18n.js";
+
 const HOLD_DELAY = 400;
 const HOLD_INTERVAL = 90;
 
@@ -27,8 +29,8 @@ export function createStepper({ label, value, min, max, step = 1, format = Strin
   root.querySelector(".stepper-label").textContent = label;
   const output = root.querySelector(".stepper-value");
   const [minus, plus] = root.querySelectorAll(".stepper-btn");
-  minus.setAttribute("aria-label", `Menos ${label.toLowerCase()}`);
-  plus.setAttribute("aria-label", `Más ${label.toLowerCase()}`);
+  minus.setAttribute("aria-label", t("less", { label: label.toLowerCase() }));
+  plus.setAttribute("aria-label", t("more", { label: label.toLowerCase() }));
 
   let current = value;
   const render = () => {

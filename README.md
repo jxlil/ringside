@@ -87,3 +87,7 @@ tests/          node --test
 ### Publicar
 
 Se publica con GitHub Pages desde la raíz de `main`. Antes de cada release: correr los tests, subir `CACHE_VERSION` en `sw.js` para que los dispositivos instalados reciban la nueva versión, y probarla en un iPhone real instalada como PWA.
+
+## Licencia
+
+[MIT](LICENSE)
